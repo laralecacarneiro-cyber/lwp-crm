@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LWP CRM — Sign in</title>
+<link rel="stylesheet" href="/style.css">
+<link rel="icon" type="image/svg+xml" href="/mark.svg">
+</head>
+<body>
+<div class="login-wrap">
+  <form class="login-card" id="loginForm">
+    <img src="/mark.svg" alt="LWP">
+    <h1>LWP CRM</h1>
+    <p>Sign in to continue</p>
+    <input type="password" id="pw" placeholder="Password" autocomplete="current-password" autofocus>
+    <button type="submit" id="submitBtn">Sign in</button>
+    <div class="error" id="err"></div>
+  </form>
+</div>
+<script>
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const pw = document.getElementById('pw').value;
+  const err = document.getElementById('err');
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true; btn.textContent = 'Signing in...';
+  err.textContent = '';
+  try {
+    const resp = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pw })
+    });
+    const data = await resp.json();
+    if (resp.ok) {
+      window.location.href = '/';
+    } else {
+      err.textContent = data.error || 'Sign in failed';
+      btn.disabled = false; btn.textContent = 'Sign in';
+    }
+  } catch (e) {
+    err.textContent = 'Network error';
+    btn.disabled = false; btn.textContent = 'Sign in';
+  }
+});
+</script>
+</body>
+</html>

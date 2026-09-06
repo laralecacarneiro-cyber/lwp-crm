@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LWP CRM — Set up database</title>
+<link rel="stylesheet" href="/style.css">
+<link rel="icon" type="image/svg+xml" href="/mark.svg">
+</head>
+<body>
+<div class="login-wrap">
+  <div class="login-card" style="max-width:480px;text-align:left;">
+    <div style="text-align:center; margin-bottom: 20px;">
+      <img src="/mark.svg" alt="LWP" style="width:56px;height:56px;">
+      <h1 style="margin-top:8px;">Set up database</h1>
+    </div>
+
+    <div id="statusPanel" style="margin-bottom: 20px;">
+      <p style="color: var(--ink-soft);">Checking database...</p>
+    </div>
+
+    <div id="actionPanel" style="display:none;">
+      <p style="color: var(--ink-soft); margin-bottom: 16px;">
+        This is a one-time setup. It creates the database tables and loads the 14 email templates (PT and EN).
+        Safe to click. If already set up, nothing bad happens.
+      </p>
+      <button id="runBtn" class="btn primary" style="width:100%; padding: 12px 14px; font-size: 15px;">Run setup</button>
+      <div id="err" style="color: var(--red); font-size: 13px; margin-top: 10px; min-height: 20px;"></div>
+    </div>
+
+    <div id="donePanel" style="display:none;">
+      <p style="color: var(--green); font-weight: 500; margin-bottom: 8px;">✓ Setup complete</p>
+      <p style="color: var(--ink-soft); margin-bottom: 16px;">
+        You can now use the app. Go to <strong>Backup</strong> in the sidebar
+        to import your <code>LWP_Outreach_CRM.xlsx</code> file with 50 organisations.
+      </p>
+      <a href="/" class="btn primary" style="display:block; width:100%; padding: 12px 14px; font-size: 15px; text-align:center; text-decoration:none;">Open the app</a>
+    </div>
+  </div>
+</div>
+
+<script>
+async function checkStatus() {
+  try {
+    const r = await fetch('/api/setup/status', { credentials: 'include' });
+    if (r.status === 401) {
+      window.location.href = '/login.html';
+      return;
+    }
+    const d = await r.json();
+    const statusPanel = document.getElementById('statusPanel');
+    const actionPanel = document.getElementById('actionPanel');
+    const donePanel = document.getElementById('donePanel');
+
+    if (d.ready) {
+      statusPanel.innerHTML = '<p style="color: var(--green);">✓ Database is set up and ready.</p>';
+      donePanel.style.display = 'block';
+    } else {
+      let msg = '';
+      if (!d.has_schema) msg = 'Database tables are missing.';
+      else if (!d.has_templates) msg = 'Email templates are missing.';
+      statusPanel.innerHTML = '<p style="color: var(--ink-soft);">' + msg + '</p>';
+      actionPanel.style.display = 'block';
+    }
+  } catch (e) {
+    document.getElementById('statusPanel').innerHTML =
+      '<p style="color: var(--red);">Could not connect to the database. Check DATABASE_URL on Render is correct, and that Supabase is running.</p><p style="color: var(--ink-soft); font-size:12px; margin-top:8px;">Details: ' + e.message + '</p>';
+  }
+}
+
+document.getElementById('runBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('runBtn');
+  const err = document.getElementById('err');
+  btn.disabled = true;
+  btn.textContent = 'Running...';
+  err.textContent = '';
+  try {
+    const r = await fetch('/api/setup/init', { method: 'POST', credentials: 'include' });
+    const d = await r.json();
+    if (r.ok) {
+      document.getElementById('actionPanel').style.display = 'none';
+      document.getElementById('statusPanel').innerHTML = '<p style="color: var(--green);">✓ Database is set up and ready.</p>';
+      document.getElementById('donePanel').style.display = 'block';
+    } else {
+      err.textContent = 'Setup failed: ' + (d.error || 'unknown error');
+      btn.disabled = false;
+      btn.textContent = 'Run setup';
+    }
+  } catch (e) {
+    err.textContent = 'Network error: ' + e.message;
+    btn.disabled = false;
+    btn.textContent = 'Run setup';
+  }
+});
+
+checkStatus();
+</script>
+</body>
+</html>
