@@ -1,0 +1,13 @@
+{
+  "name": "LWP CRM",
+  "short_name": "LWP CRM",
+  "description": "Outreach and partner management for Leading with People",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0B1530",
+  "theme_color": "#0B1530",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "/mark.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
